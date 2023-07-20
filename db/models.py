@@ -1,5 +1,5 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Constraint, UniqueConstraint, PrimaryKeyConstraint
+from sqlalchemy.orm import relationship, validates
 
 from .database import Base
 
@@ -12,15 +12,23 @@ class User(Base):
     fullname = Column(String)
     hashed_password = Column(String)
 
-    items = relationship("Item", back_populates="owner")
+    items = relationship("Post", back_populates="owner")
 
 
-class Item(Base):
-    __tablename__ = "items"
+class Post(Base):
+    __tablename__ = "posts"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True)
-    description = Column(String, index=True)
+    description = Column(String)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     owner = relationship("User", back_populates="items")
+
+class Like(Base):
+    __tablename__ = "likes"
+    user_id = Column(Integer, ForeignKey("users.id"))
+    post_id = Column(Integer, ForeignKey("posts.id"), Constraint("user_id not in (select owner_id from posts where posts.id=post_id"))
+    like = Column(Boolean)
+    __table_args__ = PrimaryKeyConstraint("user_id", "post_id")
+    user = relationship("User", back_populates="likes")
+    post = relationship("User", back_populates="likes")
