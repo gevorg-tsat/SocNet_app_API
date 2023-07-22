@@ -2,28 +2,33 @@ version: "3.11"
 
 services:
   db:
-    image: postgres:12
+    image: postgres:latest
     container_name: db
     restart: always
+    # command: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data/
       - ./sql:/sql/
     env_file:
       - ./secrets/.env
+    environment:
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
     ports:
-      - 5434:5432
-  # web:
-  #   build: .
-  #   container_name: tgbot_backend
-  #   command: bash -c "python manage.py runserver 0.0.0.0:8001"
-  #   volumes:
-  #     - .:/code
-  #   ports:
-  #     - 8001:8000
-  #   environment:
-  #     - DJANGO_DEBUG='True'
-  #   env_file:
-  #     - ./secrets/.env
-  #   depends_on:
-  #     - db
-  #   entrypoint: ./entrypoint.sh
+      - 5432:5432
+  web:
+    build: .
+    container_name: backend
+    command: bash -c "python3 app.py"
+    volumes:
+      - .:/code
+    ports:
+      - 8081:8081
+    environment:
+      - DJANGO_DEBUG='True'
+    env_file:
+      - ./secrets/.env
+    depends_on:
+      - db
+    # entrypoint: ./entrypoint.sh
+volumes:
+  postgres_data:

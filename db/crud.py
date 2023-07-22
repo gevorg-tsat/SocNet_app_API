@@ -16,29 +16,29 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 
 def create_user(db: Session, user: schema.UserCreate):
     hashed_password = hash_password(user.password)
-    db_user = models.User(email=user.email, hashed_password=hashed_password)
+    db_user = models.User(email=user.email, hashed_password=hashed_password, fullname=user.fullname)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
 
 
-def get_items(db: Session, skip: int = 0, limit: int = 100):
+def get_posts(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Post).offset(skip).limit(limit).all()
 
 def like_dislike_post(db: Session, user_id: int, post_id : int, like: bool = True):
-    db_item = models.Like(user_id = user_id, post_id=post_id, like=like)
+    db_post = models.Like(user_id = user_id, post_id=post_id, like=like)
     try:
-        db.add(db_item)
+        db.add(db_post)
     except BaseException as error:
         return {"error": error}
     db.commit()
-    db.refresh(db_item)
-    return db_item
+    db.refresh(db_post)
+    return db_post
 
-def create_user_post(db: Session, item: schema.PostCreate, user_id: int):
-    db_item = models.Post(**item.model_dump(), owner_id=user_id)
-    db.add(db_item)
+def create_user_post(db: Session, post: schema.PostCreate, user_id: int):
+    db_post = models.Post(**post.model_dump(), owner_id=user_id)
+    db.add(db_post)
     db.commit()
-    db.refresh(db_item)
-    return db_item
+    db.refresh(db_post)
+    return db_post

@@ -7,13 +7,12 @@ from .database import Base
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     email = Column(String, unique=True, index=True)
     fullname = Column(String)
     hashed_password = Column(String)
-
-    items = relationship("Post", back_populates="owner")
-
+    posts = relationship("Post", back_populates="owner")
+    # likes = relationship("Like", back_populates="user")
 
 class Post(Base):
     __tablename__ = "posts"
@@ -22,13 +21,14 @@ class Post(Base):
     description = Column(String)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
-    owner = relationship("User", back_populates="items")
+    owner = relationship("User", back_populates="posts")
+    # likes = relationship("Like", back_populates="post")
 
 class Like(Base):
     __tablename__ = "likes"
     user_id = Column(Integer, ForeignKey("users.id"))
-    post_id = Column(Integer, ForeignKey("posts.id"), Constraint("user_id not in (select owner_id from posts where posts.id=post_id"))
+    post_id = Column(Integer, ForeignKey("posts.id"))
     like = Column(Boolean)
-    __table_args__ = PrimaryKeyConstraint("user_id", "post_id")
-    user = relationship("User", back_populates="likes")
-    post = relationship("User", back_populates="likes")
+    __table_args__ = (PrimaryKeyConstraint("user_id", "post_id"),) #Constraint("user_id not in (select owner_id from posts where posts.id=post_id)"))
+    user = relationship("User")
+    post = relationship("User")

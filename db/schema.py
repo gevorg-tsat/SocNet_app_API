@@ -14,11 +14,12 @@ class Post(PostBase):
     owner_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UserBase(BaseModel):
     email: str
+    fullname: str
 
 
 class UserCreate(UserBase):
@@ -27,7 +28,6 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: int
-    items: list[Post] = []
-
+    posts: list[Post] = []
     class Config:
-        orm_mode = True
+        from_attributes = True
