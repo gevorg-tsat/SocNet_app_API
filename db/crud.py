@@ -26,8 +26,8 @@ def create_user(db: Session, user: schema.UserCreate):
 def get_posts(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Post).offset(skip).limit(limit).all()
 
-def like_dislike_post(db: Session, user_id: int, post_id : int, like: bool = True):
-    db_post = models.Like(user_id = user_id, post_id=post_id, like=like)
+def like_dislike_post(db: Session, post_id : int, like_post : schema.LikeCreateOrUpdate):
+    db_post = models.Like(**like_post.model_dump(), post_id=post_id)
     try:
         db.add(db_post)
     except BaseException as error:
@@ -37,6 +37,7 @@ def like_dislike_post(db: Session, user_id: int, post_id : int, like: bool = Tru
     return db_post
 
 def create_user_post(db: Session, post: schema.PostCreate, user_id: int):
+    
     db_post = models.Post(**post.model_dump(), owner_id=user_id)
     db.add(db_post)
     db.commit()

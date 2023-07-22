@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Constraint, UniqueConstraint, PrimaryKeyConstraint
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Constraint, UniqueConstraint, PrimaryKeyConstraint, CheckConstraint
 from sqlalchemy.orm import relationship, validates
 
 from .database import Base
@@ -29,6 +29,6 @@ class Like(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     post_id = Column(Integer, ForeignKey("posts.id"))
     like = Column(Boolean)
-    __table_args__ = (PrimaryKeyConstraint("user_id", "post_id"),) #Constraint("user_id not in (select owner_id from posts where posts.id=post_id)"))
+    __table_args__ = (PrimaryKeyConstraint("user_id", "post_id"))
     user = relationship("User")
-    post = relationship("User")
+    post = relationship("Post")

@@ -31,3 +31,14 @@ class User(UserBase):
     posts: list[Post] = []
     class Config:
         from_attributes = True
+
+class LikeBase(BaseModel):
+    user_id : int
+    like : bool = True
+
+class LikeCreateOrUpdate(LikeBase):
+    pass
+
+
+class Like(LikeBase):
+    post_id : int
