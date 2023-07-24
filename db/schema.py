@@ -4,6 +4,12 @@ from pydantic import BaseModel
 class PostBase(BaseModel):
     description: str
 
+class Token(BaseModel):
+    access_token : str
+    token_type : str
+
+class TokenData(BaseModel):
+    email : str | None = None
 
 class PostCreate(PostBase):
     pass
@@ -29,6 +35,7 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     posts: list[Post] = []
+    is_active : bool
     class Config:
         from_attributes = True
 

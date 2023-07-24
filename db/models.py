@@ -11,6 +11,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     fullname = Column(String)
     hashed_password = Column(String)
+    is_active = Column(Boolean, default=True)
     posts = relationship("Post", back_populates="owner")
     # likes = relationship("Like", back_populates="user")
 
@@ -29,6 +30,6 @@ class Like(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     post_id = Column(Integer, ForeignKey("posts.id"))
     like = Column(Boolean)
-    __table_args__ = (PrimaryKeyConstraint("user_id", "post_id"))
+    __table_args__ = (PrimaryKeyConstraint("user_id", "post_id"), )
     user = relationship("User")
     post = relationship("Post")

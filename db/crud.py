@@ -1,6 +1,20 @@
 from sqlalchemy.orm import Session
 from . import models, schema
-from .utils import hash_password, verify_password
+from .utils import hash_password, verify_password, JWT_SECRET_KEY, ALGORITHM, oauth_2_scheme
+from datetime import timedelta
+from datetime import datetime
+from jose import jwt, JWTError
+from fastapi import Depends
+from fastapi.exceptions import HTTPException
+from .schema import TokenData, User
+from db.database import SessionLocal
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
@@ -43,3 +57,46 @@ def create_user_post(db: Session, post: schema.PostCreate, user_id: int):
     db.commit()
     db.refresh(db_post)
     return db_post
+
+def authenticate_user(db : Session, email : str, password : str):
+    user = get_user_by_email(db, email=email)
+    if not user:
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
+    
+    return user
+
+def create_access_token(data : dict, expires_delta: timedelta or None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp" : expire})
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(db : Session = Depends(get_db), token : str = Depends(oauth_2_scheme)):
+    credential_exception = HTTPException(status_code=401, detail="Could not validate credentials", headers={"WWW-Authenticate" : "Bearer"})
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        email : str = payload.get("sub")
+        if email is None:
+            raise credential_exception 
+        
+        token_data = TokenData(email=email)
+    except JWTError:
+        raise credential_exception
+    
+    user = get_user_by_email(db=db, email=email)
+    if user is None:
+        raise credential_exception
+
+    return user
+
+async def get_current_active_user(current_user: User = Depends(get_current_user)):
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    
+    return current_user
