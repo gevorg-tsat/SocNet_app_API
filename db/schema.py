@@ -2,9 +2,6 @@ from pydantic import BaseModel
 from typing import Optional, Literal
 import enum
 from datetime import datetime
-class LikeEnum(str, enum.Enum):
-    LIKE = 'like'
-    DISLIKE = 'dislike'
 
 class Status(BaseModel):
     status : Literal["ok", "error"]
@@ -49,6 +46,11 @@ class User(UserBase):
     is_active : bool
     class Config:
         from_attributes = True
+
+class PostWithLikes(Post):
+    author_username : str
+    likes : int
+    dislikes : int
 
 class LikeBase(BaseModel):
     like : bool = True

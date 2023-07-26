@@ -21,7 +21,10 @@ def get_user(db: Session, user_id: int):
 
 
 def get_user_by_username(db: Session, username: str):
-    return db.query(models.User).filter(models.User.username == username).first()
+    user = db.query(models.User).filter(models.User.username == username).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
 
 
@@ -33,29 +36,35 @@ def create_user(db: Session, user: schema.UserCreate):
     db.refresh(db_user)
     return db_user
 
+def get_post_by_id(db: Session, post_id : int) -> schema.PostWithLikes:
+    post = db.query(models.Post).filter(models.Post.id == post_id).first()
+    if post is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+    likes=db.query(models.Like).filter(models.Like.post_id == post_id, models.Like.like == True).count()
+    dislikes=db.query(models.Like).filter(models.Like.post_id == post_id).count() - likes
+    return schema.PostWithLikes(**post.__dict__, likes=likes, dislikes=dislikes, author_username=post.owner.username)
 
 def get_posts(username: str, db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).filter(models.User.username == username).first().posts
 
-def like_dislike_post(db: Session, post_id : int, user_id : int, like : schema.LikeEnum):
+def like_dislike_post(db: Session, post_id : int, user_id : int, like : bool):
     post = db.query(models.Post).filter(models.Post.id == post_id).first()
     if post is None:
         raise HTTPException(status_code=404, detail="Post not found")
     if post.owner_id == user_id:
         raise HTTPException(status_code=400, detail="You can't like your own post")
     db_like = models.Like(post_id=post_id, user_id=user_id,
-                          like = True if like == schema.LikeEnum.LIKE else False)
+                          like = like)
     q = db.query(models.Like).filter(models.Like.post_id == post_id, models.Like.user_id == user_id)
-    if q is None:
+    if q.first() is None:
         db.add(db_like)
         db.commit()
         db.refresh(db_like)
-        return db_like
     else:
         post_eval = q.one()
-        post_eval.like = True if like == schema.LikeEnum.LIKE else False
+        post_eval.like = like
         db.commit()
-        return post_eval
+    return get_post_by_id(db=db, post_id=post_id)
         
 
 def create_user_post(db: Session, post: schema.PostCreate, user_id: int):
