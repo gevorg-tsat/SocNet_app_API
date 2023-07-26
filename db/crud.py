@@ -97,6 +97,17 @@ def delete_post(db : Session, post_id : int, user_id : int):
     db.commit()
     return schema.Status(status="ok")
 
+def delete_like(db : Session, post_id : int, user_id : int):
+    post = db.query(models.Post).filter(models.Post.id == post_id).first()
+    if post is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+    evaluated_post = db.query(models.Like).filter(models.Like.post_id == post_id, models.Like.user_id == user_id).first()
+    if evaluated_post is None:
+        raise HTTPException(status_code=403, detail="You have not evaluated this post")
+    db.delete(evaluated_post)
+    db.commit()    
+    return schema.Status(status="ok")
+
 def authenticate_user(db : Session, username : str, password : str):
     user = get_user_by_username(db, username=username)
     if not user:
